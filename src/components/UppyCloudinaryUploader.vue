@@ -1,8 +1,9 @@
 <template>
   <button
-    :class='[buttonStyle]'
-    v-on:click='openUploader()'
-  >{{buttonText}}
+    :class="[buttonStyle]"
+    @click="openUploader">
+
+    {{ buttonText }}
   </button>
 </template>
 
@@ -14,8 +15,7 @@
   import 'uppy/dist/uppy.min.css';
 
   const BASE_URL = 'https://api.cloudinary.com/v1_1/';
-  const IMAGE_POSTFIX = '/image/upload';
-  const VIDEO_POSTFIX = '/video/upload';
+  const POSTFIX = '/auto/upload';
 
   export default {
     props: {
@@ -23,67 +23,88 @@
         type: String,
         required: true,
       },
-      preset: {
-        type: String,
-        required: true,
-      },
+
       buttonText: {
         type: String,
         default: 'Upload',
       },
+
       minNumberOfFiles: {
         type: Number,
         default: 1,
       },
+
       maxNumberOfFiles: {
         type: Number,
         default: 10,
       },
+
       maxFileSize: {
         type: Number,
         default: 40000000,
       },
+
       allowedFileTypes: {
         type: Array,
         default() {
           return ['image/*', 'video/*'];
         },
       },
-      tags: {
-        type: Array,
-        default() {
-          return [];
-        },
-      },
+
       autoProceed: {
         type: Boolean,
         default: false,
       },
+
       showProgressDetails: {
         type: Boolean,
         default: true,
       },
+
       closeModalOnClickOutside: {
         type: Boolean,
         default: true,
       },
+
       buttonStyle: {
         type: String,
         default: 'uploader',
       },
+
+      signRequest: {
+        type: Function,
+      },
+
+      options: {
+        type: Object,
+        required: true,
+      },
     },
+
+    data() {
+      return {
+        uppy: {},
+      };
+    },
+
+    mounted() {
+      this.uppy = this.createUppyInstance();
+      this.uppy.on('complete', this.completeHandler);
+    },
+
     methods: {
       // Opens the upload dialog
       openUploader() {
         this.uppy.getPlugin('Dashboard').openModal();
       },
+
       // Uploads a single file
-      uploadFile(file) {
+      uploadFile(file, options) {
         const formData = new FormData();
-        formData.append('file', file.data);
-        formData.append('upload_preset', this.preset);
-        formData.append('tags', this.tags);
         const xhr = new XMLHttpRequest();
+
+        formData.append('file', file.data);
+        this.appendFormDataParams(formData, options);
 
         xhr.upload.addEventListener('loadstart', () => {
           this.uppy.emit('upload-started', file.id);
@@ -115,13 +136,10 @@
           }
         });
 
-        if (file.type.startsWith('video')) {
-          xhr.open('POST', `${BASE_URL}${this.cloudName}${VIDEO_POSTFIX}`);
-        } else {
-          xhr.open('POST', `${BASE_URL}${this.cloudName}${IMAGE_POSTFIX}`);
-        }
+        xhr.open('POST', `${BASE_URL}${this.cloudName}${POSTFIX}`);
         xhr.send(formData);
       },
+
       // Create an instance of Uppy.io
       createUppyInstance() {
         return Uppy({
@@ -143,21 +161,26 @@
           })
           .run();
       },
+
       // Complete handler for Uppy
       completeHandler(result) {
-        result.successful.forEach((file) => {
-          this.uploadFile(file);
+        (async () => {
+          let options = null;
+          if (this.options.type !== undefined) {
+            const response = await this.signRequest(this.options);
+            options = response.data;
+          }
+          result.successful.forEach((file) => {
+            this.uploadFile(file, options || this.options);
+          });
+        })();
+      },
+
+      appendFormDataParams(formData, params) {
+        Object.keys(params).forEach((key) => {
+          formData.append(key, params[key]);
         });
       },
-    },
-    mounted() {
-      this.uppy = this.createUppyInstance();
-      this.uppy.on('complete', this.completeHandler);
-    },
-    data() {
-      return {
-        uppy: {},
-      };
     },
   };
 </script>
