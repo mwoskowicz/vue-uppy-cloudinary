@@ -56,6 +56,11 @@
         default: false,
       },
 
+      autoClose: {
+        type: Boolean,
+        default: true,
+      },
+
       showProgressDetails: {
         type: Boolean,
         default: true,
@@ -98,8 +103,13 @@
         this.uppy.getPlugin('Dashboard').openModal();
       },
 
+      // Closes the upload dialog
+      closeUploader() {
+        this.uppy.getPlugin('Dashboard').closeModal();
+      },
+
       // Uploads a single file
-      uploadFile(file, options) {
+      uploadFile(file, options, isLastFile) {
         const formData = new FormData();
         const xhr = new XMLHttpRequest();
 
@@ -114,6 +124,7 @@
           if (ev.target.status === 200) {
             this.$emit('uploaded', JSON.parse(ev.target.response));
             this.uppy.emit('upload-success', file.id);
+            if (isLastFile && this.autoClose) { setTimeout(this.closeUploader, 500); }
           } else {
             this.uppy.emit('upload-error', file.id, new Error('Failed to upload'));
           }
@@ -166,12 +177,13 @@
       completeHandler(result) {
         (async () => {
           let options = null;
+          const filesLength = result.successful.length;
           if (this.options.type !== undefined) {
             const response = await this.signRequest(this.options);
             options = response.data;
           }
-          result.successful.forEach((file) => {
-            this.uploadFile(file, options || this.options);
+          result.successful.forEach((file, index) => {
+            this.uploadFile(file, options || this.options, filesLength === index + 1);
           });
         })();
       },
