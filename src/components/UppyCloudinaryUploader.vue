@@ -1,6 +1,7 @@
 <template>
   <button
     :class="[buttonStyle]"
+    @focus="preventFocus"
     @click="openUploader">
 
     {{ buttonText }}
@@ -192,6 +193,11 @@
         Object.keys(params).forEach((key) => {
           formData.append(key, params[key]);
         });
+      },
+
+      preventFocus(event) {
+        event.srcElement.blur();
+        event.preventDefault();
       },
     },
   };
