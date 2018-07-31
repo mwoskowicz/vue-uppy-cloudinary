@@ -25,6 +25,11 @@
         required: true,
       },
 
+      locales: {
+        type: Object,
+        required: false,
+      },
+
       buttonText: {
         type: String,
         default: 'Upload',
@@ -167,6 +172,9 @@
             target: 'body',
             showProgressDetails: this.showProgressDetails,
             closeModalOnClickOutside: this.closeModalOnClickOutside,
+            locale: {
+              strings: this.locales,
+            },
           })
           .use(Webcam, {
             target: Dashboard,
