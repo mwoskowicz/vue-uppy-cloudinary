@@ -178,6 +178,9 @@
           })
           .use(Webcam, {
             target: Dashboard,
+            locale: {
+              strings: this.locales,
+            },
           })
           .run();
       },
