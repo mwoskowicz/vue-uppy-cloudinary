@@ -261,15 +261,15 @@
             target: 'body',
             showProgressDetails: this.showProgressDetails,
             closeModalOnClickOutside: this.closeModalOnClickOutside,
-            // locale: {
-            //   // strings: DE_LOCALES,
-            // },
+            locale: {
+              strings: DE_LOCALES,
+            },
           })
           .use(Webcam, {
             target: Dashboard,
-            // locale: {
-            //   strings: DE_LOCALES,
-            // },
+            locale: {
+              strings: DE_LOCALES,
+            },
           })
           .run();
       },
